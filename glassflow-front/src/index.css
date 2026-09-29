@@ -1,0 +1,97 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 222 47% 11%;
+    --card: 0 0% 100%;
+    --card-foreground: 222 47% 11%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 47% 11%;
+    --primary: 201 96% 32%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 210 40% 96%;
+    --secondary-foreground: 222 47% 11%;
+    --muted: 210 40% 96%;
+    --muted-foreground: 215 16% 47%;
+    --accent: 210 40% 94%;
+    --accent-foreground: 222 47% 11%;
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 214 32% 91%;
+    --input: 214 32% 91%;
+    --ring: 201 96% 32%;
+    --radius: 0.5rem;
+
+    --sidebar: 210 40% 98%;
+    --sidebar-foreground: 222 30% 25%;
+    --sidebar-accent: 201 96% 92%;
+    --sidebar-border: 214 32% 91%;
+
+    /* Cores semânticas de status */
+    --status-aguardando: 38 92% 92%;
+    --status-aguardando-fg: 30 80% 30%;
+    --status-aprovado: 142 60% 90%;
+    --status-aprovado-fg: 142 72% 25%;
+    --status-recusado: 0 80% 94%;
+    --status-recusado-fg: 0 70% 40%;
+    --status-instalado: 210 90% 92%;
+    --status-instalado-fg: 210 80% 35%;
+    --status-concluido: 168 70% 88%;
+    --status-concluido-fg: 172 80% 22%;
+    --status-arquivado: 215 20% 90%;
+    --status-arquivado-fg: 215 16% 40%;
+  }
+
+  .dark {
+    --background: 222 47% 8%;
+    --foreground: 210 40% 96%;
+    --card: 222 44% 11%;
+    --card-foreground: 210 40% 96%;
+    --popover: 222 44% 11%;
+    --popover-foreground: 210 40% 96%;
+    --primary: 199 89% 55%;
+    --primary-foreground: 222 47% 11%;
+    --secondary: 217 33% 18%;
+    --secondary-foreground: 210 40% 96%;
+    --muted: 217 33% 18%;
+    --muted-foreground: 215 20% 65%;
+    --accent: 217 33% 20%;
+    --accent-foreground: 210 40% 96%;
+    --destructive: 0 63% 45%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 217 33% 20%;
+    --input: 217 33% 22%;
+    --ring: 199 89% 55%;
+
+    --sidebar: 222 45% 10%;
+    --sidebar-foreground: 210 30% 80%;
+    --sidebar-accent: 217 40% 20%;
+    --sidebar-border: 217 33% 18%;
+
+    --status-aguardando: 38 60% 22%;
+    --status-aguardando-fg: 38 92% 80%;
+    --status-aprovado: 142 40% 20%;
+    --status-aprovado-fg: 142 60% 78%;
+    --status-recusado: 0 45% 25%;
+    --status-recusado-fg: 0 80% 82%;
+    --status-instalado: 210 50% 25%;
+    --status-instalado-fg: 210 90% 82%;
+    --status-concluido: 172 45% 20%;
+    --status-concluido-fg: 168 70% 78%;
+    --status-arquivado: 215 20% 25%;
+    --status-arquivado-fg: 215 20% 75%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+}
