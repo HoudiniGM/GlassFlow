@@ -11,6 +11,7 @@ import { AppLayout } from "@/components/app-layout";
 
 import LoginPage from "@/pages/login";
 import ClientesPage from "@/pages/clientes";
+import ClienteDetalhePage from "@/pages/cliente-detalhe";
 import OrcamentosPage from "@/pages/orcamentos";
 import OrcamentoDetalhePage from "@/pages/orcamento-detalhe";
 import FichaMedicaoPage from "@/pages/ficha-medicao";
@@ -29,6 +30,7 @@ const router = createBrowserRouter([
     children: [
       { index: true, element: <Navigate to="/orcamentos" replace /> },
       { path: "clientes", element: <ClientesPage /> },
+      { path: "clientes/:id", element: <ClienteDetalhePage /> },
       { path: "orcamentos", element: <OrcamentosPage /> },
       { path: "orcamentos/:id", element: <OrcamentoDetalhePage /> },
       { path: "pedidos", element: <PedidosPage /> },
