@@ -5,12 +5,14 @@ import {
   Package,
   Search,
   Archive,
-  FolderOpen,
+  Pencil,
   MessageCircle,
 } from "lucide-react";
 import { PageHeader } from "@/components/page-header";
 import { StatusFilter } from "@/components/status-filter";
 import { StatusSelect } from "@/components/status-select";
+import { DetailField, DetailGrid } from "@/components/detail-field";
+import { WhatsappButton } from "@/components/whatsapp-button";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
@@ -54,6 +56,7 @@ export default function PedidosPage() {
   const { papel } = useSession();
   const [filtro, setFiltro] = React.useState("TODOS");
   const [busca, setBusca] = React.useState("");
+  const [expandido, setExpandido] = React.useState<string | null>(null);
   // status editável por tela (inline), mantido localmente no protótipo
   const [statusMap, setStatusMap] = React.useState<Record<string, StatusPedido>>(
     () => Object.fromEntries(pedidos.map((p) => [p.id, p.status]))
@@ -66,6 +69,10 @@ export default function PedidosPage() {
   function alterarStatus(id: string, novo: StatusPedido) {
     setStatusMap((m) => ({ ...m, [id]: novo }));
     toast.success("Status atualizado.");
+  }
+
+  function toggle(id: string) {
+    setExpandido((atual) => (atual === id ? null : id));
   }
 
   function wa(celular: string) {
@@ -136,7 +143,7 @@ export default function PedidosPage() {
                   <TableHead>Status</TableHead>
                   <TableHead>Financeiro</TableHead>
                   <TableHead className="text-right">Valor total</TableHead>
-                  <TableHead className="text-right">Saldo</TableHead>
+                  <TableHead className="text-right">Saldo devedor</TableHead>
                   <TableHead className="w-10"></TableHead>
                 </TableRow>
               </TableHeader>
@@ -149,68 +156,133 @@ export default function PedidosPage() {
                   const arquivavel =
                     status === "CONCLUIDO" || status === "CANCELADO";
                   const podeConcluir = status === "INSTALADO" && saldo <= 0;
+                  const aberto = expandido === p.id;
                   return (
-                    <TableRow
-                      key={p.id}
-                      className="cursor-pointer"
-                      onClick={() => navigate(`/pedidos/${p.id}`)}
-                    >
-                      <TableCell className="font-medium">{p.codigo}</TableCell>
-                      <TableCell>{p.clienteNome}</TableCell>
-                      {/* Seleção de status inline (sem abrir a célula) */}
-                      <TableCell onClick={(e) => e.stopPropagation()}>
-                        <StatusSelect
-                          tipo="pedido"
-                          value={status}
-                          onChange={(v) =>
-                            alterarStatus(p.id, v as StatusPedido)
-                          }
-                          isDisabledOption={(v) =>
-                            v === "CONCLUIDO" && !podeConcluir
-                          }
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant={fin.variant}>{fin.label}</Badge>
-                      </TableCell>
-                      <TableCell className="text-right tabular-nums">
-                        {formatCurrency(p.valorTotal)}
-                      </TableCell>
-                      <TableCell className="text-right tabular-nums">
-                        {formatCurrency(saldo)}
-                      </TableCell>
-                      <TableCell onClick={(e) => e.stopPropagation()}>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon">
-                              <MoreHorizontal className="h-4 w-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem
-                              onClick={() => navigate(`/pedidos/${p.id}`)}
-                            >
-                              <FolderOpen className="h-4 w-4" /> Abrir
-                            </DropdownMenuItem>
-                            <DropdownMenuItem asChild>
-                              <a
-                                href={wa(p.clienteCelular)}
-                                target="_blank"
-                                rel="noreferrer"
+                    <React.Fragment key={p.id}>
+                      <TableRow
+                        className="cursor-pointer"
+                        data-state={aberto ? "selected" : undefined}
+                        onClick={() => toggle(p.id)}
+                      >
+                        <TableCell className="font-medium">
+                          {p.codigo}
+                        </TableCell>
+                        <TableCell>{p.clienteNome}</TableCell>
+                        {/* Seleção de status inline (sem abrir a célula) */}
+                        <TableCell onClick={(e) => e.stopPropagation()}>
+                          <StatusSelect
+                            tipo="pedido"
+                            value={status}
+                            onChange={(v) =>
+                              alterarStatus(p.id, v as StatusPedido)
+                            }
+                            isDisabledOption={(v) =>
+                              v === "CONCLUIDO" && !podeConcluir
+                            }
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant={fin.variant}>{fin.label}</Badge>
+                        </TableCell>
+                        <TableCell className="text-right tabular-nums">
+                          {formatCurrency(p.valorTotal)}
+                        </TableCell>
+                        <TableCell className="text-right tabular-nums">
+                          {formatCurrency(saldo)}
+                        </TableCell>
+                        <TableCell onClick={(e) => e.stopPropagation()}>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="icon">
+                                <MoreHorizontal className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem
+                                onClick={() => navigate(`/pedidos/${p.id}`)}
                               >
-                                <MessageCircle className="h-4 w-4 text-green-600" />{" "}
-                                Falar com o cliente
-                              </a>
-                            </DropdownMenuItem>
-                            {papel === "ADMINISTRADOR" && (
-                              <DropdownMenuItem disabled={!arquivavel}>
-                                <Archive className="h-4 w-4" /> Arquivar
+                                <Pencil className="h-4 w-4" /> Editar
                               </DropdownMenuItem>
-                            )}
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </TableCell>
-                    </TableRow>
+                              <DropdownMenuItem asChild>
+                                <a
+                                  href={wa(p.clienteCelular)}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                >
+                                  <MessageCircle className="h-4 w-4 text-green-600" />{" "}
+                                  Falar com o cliente
+                                </a>
+                              </DropdownMenuItem>
+                              {papel === "ADMINISTRADOR" && (
+                                <DropdownMenuItem disabled={!arquivavel}>
+                                  <Archive className="h-4 w-4" /> Arquivar
+                                </DropdownMenuItem>
+                              )}
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </TableCell>
+                      </TableRow>
+
+                      {aberto && (
+                        <TableRow className="hover:bg-transparent">
+                          <TableCell colSpan={7} className="p-3">
+                            <DetailGrid>
+                              <DetailField label="Código">
+                                {p.codigo}
+                              </DetailField>
+                              <DetailField label="Orçamento de origem">
+                                {p.orcamentoCodigo}
+                              </DetailField>
+                              <DetailField label="Cliente">
+                                {p.clienteNome}
+                              </DetailField>
+                              <DetailField label="Celular">
+                                {p.clienteCelular}
+                              </DetailField>
+                              <DetailField label="Responsável">
+                                {p.responsavel}
+                              </DetailField>
+                              <DetailField label="Medidor">
+                                {p.medidor ?? "A definir"}
+                              </DetailField>
+                              <DetailField
+                                label="Endereço da instalação"
+                                className="col-span-2 sm:col-span-3"
+                              >
+                                {p.enderecoInstalacao}
+                              </DetailField>
+                              <DetailField
+                                label="Descrição"
+                                className="col-span-2 sm:col-span-3"
+                              >
+                                {p.descricao}
+                              </DetailField>
+                              <DetailField label="Valor total">
+                                {formatCurrency(p.valorTotal)}
+                              </DetailField>
+                              <DetailField label="Valor pago">
+                                {formatCurrency(p.valorPago)}
+                              </DetailField>
+                              <DetailField label="Saldo devedor">
+                                {formatCurrency(saldo)}
+                              </DetailField>
+                            </DetailGrid>
+                            <div className="mt-3 flex gap-2">
+                              <Button
+                                size="sm"
+                                onClick={() => navigate(`/pedidos/${p.id}`)}
+                              >
+                                <Pencil /> Editar
+                              </Button>
+                              <WhatsappButton
+                                celular={p.clienteCelular}
+                                size="sm"
+                              />
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      )}
+                    </React.Fragment>
                   );
                 })}
               </TableBody>
@@ -225,11 +297,12 @@ export default function PedidosPage() {
               const podeConcluir = status === "INSTALADO" && saldo <= 0;
               const fin =
                 FINANCEIRO[situacaoFinanceira(p.valorTotal, p.valorPago)];
+              const aberto = expandido === p.id;
               return (
                 <Card
                   key={p.id}
                   className="p-4"
-                  onClick={() => navigate(`/pedidos/${p.id}`)}
+                  onClick={() => toggle(p.id)}
                 >
                   <div className="flex items-start justify-between gap-2">
                     <div>
@@ -254,6 +327,33 @@ export default function PedidosPage() {
                       {formatCurrency(p.valorTotal)}
                     </span>
                   </div>
+
+                  {aberto && (
+                    <div className="mt-3 space-y-2 border-t pt-3 text-sm">
+                      <div>
+                        <div className="text-xs text-muted-foreground">
+                          Endereço
+                        </div>
+                        <div>{p.enderecoInstalacao}</div>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">
+                          Valor pago
+                        </span>
+                        <span className="tabular-nums">
+                          {formatCurrency(p.valorPago)}
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">
+                          Saldo devedor
+                        </span>
+                        <span className="tabular-nums">
+                          {formatCurrency(saldo)}
+                        </span>
+                      </div>
+                    </div>
+                  )}
                 </Card>
               );
             })}

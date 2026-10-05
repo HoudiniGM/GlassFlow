@@ -7,7 +7,6 @@ import {
   Loader2,
   AlertCircle,
   Lock,
-  Pencil,
 } from "lucide-react";
 import { PageHeader } from "@/components/page-header";
 import { Button } from "@/components/ui/button";
@@ -39,7 +38,6 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { WhatsappButton } from "@/components/whatsapp-button";
-import { CopyButton } from "@/components/copy-button";
 import { orcamentos } from "@/data/mock";
 import {
   ORCAMENTO_STATUS,
@@ -49,6 +47,7 @@ import type { StatusOrcamento } from "@/data/types";
 import { formatCurrency } from "@/lib/utils";
 import { toast } from "sonner";
 
+// Tela de EDIÇÃO direta do orçamento (a consulta é feita pela expansão na listagem).
 export default function OrcamentoDetalhePage() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -57,7 +56,6 @@ export default function OrcamentoDetalhePage() {
   const [status, setStatus] = React.useState<StatusOrcamento>(
     orcamento?.status ?? "AGUARDANDO_MEDICAO"
   );
-  const [editando, setEditando] = React.useState(false);
   const [salvando, setSalvando] = React.useState(false);
   const [converterOpen, setConverterOpen] = React.useState(false);
   const [convertendo, setConvertendo] = React.useState(false);
@@ -75,15 +73,15 @@ export default function OrcamentoDetalhePage() {
   const aprovado = status === "APROVADO";
   const semDocumento = false; // simulação: cliente possui documento
 
-  // Campos só são editáveis quando em modo edição E o orçamento não está aprovado (imutável).
-  const soLeitura = !editando || aprovado;
+  // Orçamento aprovado é imutável (ADR 7.6).
+  const soLeitura = aprovado;
 
   function salvar() {
     setSalvando(true);
     setTimeout(() => {
       setSalvando(false);
-      setEditando(false);
       toast.success("Orçamento atualizado.");
+      navigate("/orcamentos");
     }, 700);
   }
 
@@ -106,13 +104,12 @@ export default function OrcamentoDetalhePage() {
           </Link>
         </Button>
         <PageHeader
-          title={orcamento.codigo}
+          title={`Editar ${orcamento.codigo}`}
           description={`Cliente: ${orcamento.clienteNome}`}
           actions={
-            !aprovado &&
-            (editando ? (
+            !aprovado && (
               <>
-                <Button variant="outline" onClick={() => setEditando(false)}>
+                <Button variant="outline" onClick={() => navigate("/orcamentos")}>
                   Cancelar
                 </Button>
                 <Button onClick={salvar} disabled={salvando}>
@@ -120,11 +117,7 @@ export default function OrcamentoDetalhePage() {
                   Salvar
                 </Button>
               </>
-            ) : (
-              <Button onClick={() => setEditando(true)}>
-                <Pencil /> Editar
-              </Button>
-            ))
+            )
           }
         />
         <Badge variant={st.variant} className="ml-2">
@@ -132,7 +125,7 @@ export default function OrcamentoDetalhePage() {
         </Badge>
       </div>
 
-      {aprovado ? (
+      {aprovado && (
         <Alert variant="info">
           <Lock className="h-4 w-4" />
           <AlertTitle>Registro histórico</AlertTitle>
@@ -141,15 +134,6 @@ export default function OrcamentoDetalhePage() {
             imutável — alterações devem ser feitas no pedido correspondente.
           </AlertDescription>
         </Alert>
-      ) : (
-        !editando && (
-          <Alert>
-            <AlertDescription>
-              Visualização somente leitura. Clique em <strong>Editar</strong>{" "}
-              para alterar os dados.
-            </AlertDescription>
-          </Alert>
-        )
       )}
 
       <div className="grid gap-6 lg:grid-cols-3">
@@ -166,34 +150,18 @@ export default function OrcamentoDetalhePage() {
                 </div>
                 <div className="space-y-2">
                   <Label>Celular</Label>
-                  <div className="flex items-center gap-1">
-                    <Input
-                      defaultValue={orcamento.clienteCelular}
-                      disabled={soLeitura}
-                    />
-                    {soLeitura && (
-                      <CopyButton
-                        value={orcamento.clienteCelular}
-                        label="Celular"
-                      />
-                    )}
-                  </div>
+                  <Input
+                    defaultValue={orcamento.clienteCelular}
+                    disabled={soLeitura}
+                  />
                 </div>
               </div>
               <div className="space-y-2">
                 <Label>Endereço da instalação</Label>
-                <div className="flex items-center gap-1">
-                  <Input
-                    defaultValue={orcamento.enderecoInstalacao}
-                    disabled={soLeitura}
-                  />
-                  {soLeitura && (
-                    <CopyButton
-                      value={orcamento.enderecoInstalacao}
-                      label="Endereço"
-                    />
-                  )}
-                </div>
+                <Input
+                  defaultValue={orcamento.enderecoInstalacao}
+                  disabled={soLeitura}
+                />
               </div>
               <div className="space-y-2">
                 <Label>Descrição</Label>

@@ -1,5 +1,5 @@
 import * as React from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, useNavigate, Link } from "react-router-dom";
 import {
   ArrowLeft,
   AlertCircle,
@@ -58,6 +58,7 @@ import { toast } from "sonner";
 
 export default function PedidoDetalhePage() {
   const { id } = useParams();
+  const navigate = useNavigate();
   const { papel } = useSession();
   const pedido = pedidos.find((p) => p.id === id);
 
@@ -68,6 +69,16 @@ export default function PedidoDetalhePage() {
   const [pagOpen, setPagOpen] = React.useState(false);
   const [recebimento, setRecebimento] = React.useState("");
   const [salvando, setSalvando] = React.useState(false);
+  const [salvandoPedido, setSalvandoPedido] = React.useState(false);
+
+  function salvarPedido() {
+    setSalvandoPedido(true);
+    setTimeout(() => {
+      setSalvandoPedido(false);
+      toast.success("Pedido atualizado.");
+      navigate("/pedidos");
+    }, 700);
+  }
 
   if (!pedido) {
     return (
@@ -110,8 +121,19 @@ export default function PedidoDetalhePage() {
           </Link>
         </Button>
         <PageHeader
-          title={pedido.codigo}
+          title={`Editar ${pedido.codigo}`}
           description={`Cliente: ${pedido.clienteNome}`}
+          actions={
+            <>
+              <Button variant="outline" onClick={() => navigate("/pedidos")}>
+                Cancelar
+              </Button>
+              <Button onClick={salvarPedido} disabled={salvandoPedido}>
+                {salvandoPedido && <Loader2 className="h-4 w-4 animate-spin" />}
+                Salvar
+              </Button>
+            </>
+          }
         />
         <Badge variant={st.variant}>{st.label}</Badge>
         <Badge variant={fin.variant}>{fin.label}</Badge>
@@ -198,7 +220,7 @@ export default function PedidoDetalhePage() {
               <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
                 <Resumo label="Valor total" valor={formatCurrency(pedido.valorTotal)} />
                 <Resumo label="Valor pago" valor={formatCurrency(valorPago)} />
-                <Resumo label="Saldo" valor={formatCurrency(saldo)} />
+                <Resumo label="Saldo devedor" valor={formatCurrency(saldo)} />
                 <div>
                   <div className="text-xs text-muted-foreground">Situação</div>
                   <Badge variant={fin.variant} className="mt-1">
@@ -261,8 +283,8 @@ export default function PedidoDetalhePage() {
               </Select>
               {!podeConcluir && (
                 <p className="text-xs text-muted-foreground">
-                  "Concluído" exige pedido instalado e saldo quitado (validado
-                  no backend).
+                  "Concluído" exige pedido instalado e saldo devedor zerado
+                  (validado no backend).
                 </p>
               )}
             </CardContent>
@@ -277,7 +299,6 @@ export default function PedidoDetalhePage() {
                 celular={pedido.clienteCelular}
                 className="w-full justify-start"
               />
-              <Button className="w-full justify-start">Salvar</Button>
               {isAdmin && (
                 <Button
                   variant="outline"
@@ -314,11 +335,11 @@ export default function PedidoDetalhePage() {
             />
             {excede ? (
               <p className="text-xs text-destructive">
-                O valor excede o saldo de {formatCurrency(saldo)}.
+                O valor excede o saldo devedor de {formatCurrency(saldo)}.
               </p>
             ) : (
               <p className="text-xs text-muted-foreground">
-                Saldo disponível: {formatCurrency(saldo)}
+                Saldo devedor: {formatCurrency(saldo)}
               </p>
             )}
           </div>
