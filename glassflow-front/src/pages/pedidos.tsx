@@ -1,8 +1,16 @@
 import * as React from "react";
 import { useNavigate } from "react-router-dom";
-import { MoreHorizontal, Package, Search, Archive } from "lucide-react";
+import {
+  MoreHorizontal,
+  Package,
+  Search,
+  Archive,
+  FolderOpen,
+  MessageCircle,
+} from "lucide-react";
 import { PageHeader } from "@/components/page-header";
 import { StatusFilter } from "@/components/status-filter";
+import { StatusSelect } from "@/components/status-select";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
@@ -37,25 +45,44 @@ import {
   situacaoFinanceira,
 } from "@/data/status";
 import { formatCurrency } from "@/lib/utils";
+import type { StatusPedido } from "@/data/types";
 import { useSession } from "@/app/session";
+import { toast } from "sonner";
 
 export default function PedidosPage() {
   const navigate = useNavigate();
   const { papel } = useSession();
   const [filtro, setFiltro] = React.useState("TODOS");
   const [busca, setBusca] = React.useState("");
+  // status editável por tela (inline), mantido localmente no protótipo
+  const [statusMap, setStatusMap] = React.useState<Record<string, StatusPedido>>(
+    () => Object.fromEntries(pedidos.map((p) => [p.id, p.status]))
+  );
+
+  function getStatus(id: string, fallback: StatusPedido) {
+    return statusMap[id] ?? fallback;
+  }
+
+  function alterarStatus(id: string, novo: StatusPedido) {
+    setStatusMap((m) => ({ ...m, [id]: novo }));
+    toast.success("Status atualizado.");
+  }
+
+  function wa(celular: string) {
+    return `https://wa.me/55${celular.replace(/\D/g, "")}`;
+  }
 
   const opcoes = [
     { value: "TODOS", label: "Todos", count: pedidos.length },
     ...PEDIDO_STATUS_ORDER.map((s) => ({
       value: s,
       label: PEDIDO_STATUS[s].label,
-      count: pedidos.filter((p) => p.status === s).length,
+      count: pedidos.filter((p) => getStatus(p.id, p.status) === s).length,
     })),
   ];
 
   const lista = pedidos
-    .filter((p) => filtro === "TODOS" || p.status === filtro)
+    .filter((p) => filtro === "TODOS" || getStatus(p.id, p.status) === filtro)
     .filter((p) => p.clienteNome.toLowerCase().includes(busca.toLowerCase()));
 
   return (
@@ -115,12 +142,13 @@ export default function PedidosPage() {
               </TableHeader>
               <TableBody>
                 {lista.map((p) => {
-                  const st = PEDIDO_STATUS[p.status];
+                  const status = getStatus(p.id, p.status);
                   const fin =
                     FINANCEIRO[situacaoFinanceira(p.valorTotal, p.valorPago)];
                   const saldo = p.valorTotal - p.valorPago;
                   const arquivavel =
-                    p.status === "CONCLUIDO" || p.status === "CANCELADO";
+                    status === "CONCLUIDO" || status === "CANCELADO";
+                  const podeConcluir = status === "INSTALADO" && saldo <= 0;
                   return (
                     <TableRow
                       key={p.id}
@@ -129,8 +157,18 @@ export default function PedidosPage() {
                     >
                       <TableCell className="font-medium">{p.codigo}</TableCell>
                       <TableCell>{p.clienteNome}</TableCell>
-                      <TableCell>
-                        <Badge variant={st.variant}>{st.label}</Badge>
+                      {/* Seleção de status inline (sem abrir a célula) */}
+                      <TableCell onClick={(e) => e.stopPropagation()}>
+                        <StatusSelect
+                          tipo="pedido"
+                          value={status}
+                          onChange={(v) =>
+                            alterarStatus(p.id, v as StatusPedido)
+                          }
+                          isDisabledOption={(v) =>
+                            v === "CONCLUIDO" && !podeConcluir
+                          }
+                        />
                       </TableCell>
                       <TableCell>
                         <Badge variant={fin.variant}>{fin.label}</Badge>
@@ -152,7 +190,17 @@ export default function PedidosPage() {
                             <DropdownMenuItem
                               onClick={() => navigate(`/pedidos/${p.id}`)}
                             >
-                              Abrir
+                              <FolderOpen className="h-4 w-4" /> Abrir
+                            </DropdownMenuItem>
+                            <DropdownMenuItem asChild>
+                              <a
+                                href={wa(p.clienteCelular)}
+                                target="_blank"
+                                rel="noreferrer"
+                              >
+                                <MessageCircle className="h-4 w-4 text-green-600" />{" "}
+                                Falar com o cliente
+                              </a>
                             </DropdownMenuItem>
                             {papel === "ADMINISTRADOR" && (
                               <DropdownMenuItem disabled={!arquivavel}>
@@ -172,7 +220,9 @@ export default function PedidosPage() {
           {/* Mobile */}
           <div className="space-y-3 sm:hidden">
             {lista.map((p) => {
-              const st = PEDIDO_STATUS[p.status];
+              const status = getStatus(p.id, p.status);
+              const saldo = p.valorTotal - p.valorPago;
+              const podeConcluir = status === "INSTALADO" && saldo <= 0;
               const fin =
                 FINANCEIRO[situacaoFinanceira(p.valorTotal, p.valorPago)];
               return (
@@ -181,14 +231,22 @@ export default function PedidosPage() {
                   className="p-4"
                   onClick={() => navigate(`/pedidos/${p.id}`)}
                 >
-                  <div className="flex items-start justify-between">
+                  <div className="flex items-start justify-between gap-2">
                     <div>
                       <div className="text-xs text-muted-foreground">
                         {p.codigo}
                       </div>
                       <div className="font-medium">{p.clienteNome}</div>
                     </div>
-                    <Badge variant={st.variant}>{st.label}</Badge>
+                    <StatusSelect
+                      tipo="pedido"
+                      value={status}
+                      onChange={(v) => alterarStatus(p.id, v as StatusPedido)}
+                      onClick={(e) => e.stopPropagation()}
+                      isDisabledOption={(v) =>
+                        v === "CONCLUIDO" && !podeConcluir
+                      }
+                    />
                   </div>
                   <div className="mt-2 flex items-center justify-between text-sm">
                     <Badge variant={fin.variant}>{fin.label}</Badge>

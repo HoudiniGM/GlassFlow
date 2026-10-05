@@ -7,6 +7,7 @@ import {
   Loader2,
   AlertCircle,
   Lock,
+  Pencil,
 } from "lucide-react";
 import { PageHeader } from "@/components/page-header";
 import { Button } from "@/components/ui/button";
@@ -38,6 +39,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { WhatsappButton } from "@/components/whatsapp-button";
+import { CopyButton } from "@/components/copy-button";
 import { orcamentos } from "@/data/mock";
 import {
   ORCAMENTO_STATUS,
@@ -55,6 +57,8 @@ export default function OrcamentoDetalhePage() {
   const [status, setStatus] = React.useState<StatusOrcamento>(
     orcamento?.status ?? "AGUARDANDO_MEDICAO"
   );
+  const [editando, setEditando] = React.useState(false);
+  const [salvando, setSalvando] = React.useState(false);
   const [converterOpen, setConverterOpen] = React.useState(false);
   const [convertendo, setConvertendo] = React.useState(false);
 
@@ -71,6 +75,18 @@ export default function OrcamentoDetalhePage() {
   const aprovado = status === "APROVADO";
   const semDocumento = false; // simulação: cliente possui documento
 
+  // Campos só são editáveis quando em modo edição E o orçamento não está aprovado (imutável).
+  const soLeitura = !editando || aprovado;
+
+  function salvar() {
+    setSalvando(true);
+    setTimeout(() => {
+      setSalvando(false);
+      setEditando(false);
+      toast.success("Orçamento atualizado.");
+    }, 700);
+  }
+
   function converter() {
     setConvertendo(true);
     setTimeout(() => {
@@ -83,7 +99,7 @@ export default function OrcamentoDetalhePage() {
 
   return (
     <>
-      <div className="flex items-center gap-2">
+      <div className="flex flex-wrap items-center gap-2">
         <Button variant="ghost" size="icon" asChild>
           <Link to="/orcamentos">
             <ArrowLeft className="h-4 w-4" />
@@ -92,13 +108,31 @@ export default function OrcamentoDetalhePage() {
         <PageHeader
           title={orcamento.codigo}
           description={`Cliente: ${orcamento.clienteNome}`}
+          actions={
+            !aprovado &&
+            (editando ? (
+              <>
+                <Button variant="outline" onClick={() => setEditando(false)}>
+                  Cancelar
+                </Button>
+                <Button onClick={salvar} disabled={salvando}>
+                  {salvando && <Loader2 className="h-4 w-4 animate-spin" />}
+                  Salvar
+                </Button>
+              </>
+            ) : (
+              <Button onClick={() => setEditando(true)}>
+                <Pencil /> Editar
+              </Button>
+            ))
+          }
         />
         <Badge variant={st.variant} className="ml-2">
           {st.label}
         </Badge>
       </div>
 
-      {aprovado && (
+      {aprovado ? (
         <Alert variant="info">
           <Lock className="h-4 w-4" />
           <AlertTitle>Registro histórico</AlertTitle>
@@ -107,6 +141,15 @@ export default function OrcamentoDetalhePage() {
             imutável — alterações devem ser feitas no pedido correspondente.
           </AlertDescription>
         </Alert>
+      ) : (
+        !editando && (
+          <Alert>
+            <AlertDescription>
+              Visualização somente leitura. Clique em <strong>Editar</strong>{" "}
+              para alterar os dados.
+            </AlertDescription>
+          </Alert>
+        )
       )}
 
       <div className="grid gap-6 lg:grid-cols-3">
@@ -123,19 +166,41 @@ export default function OrcamentoDetalhePage() {
                 </div>
                 <div className="space-y-2">
                   <Label>Celular</Label>
-                  <Input defaultValue={orcamento.clienteCelular} disabled={aprovado} />
+                  <div className="flex items-center gap-1">
+                    <Input
+                      defaultValue={orcamento.clienteCelular}
+                      disabled={soLeitura}
+                    />
+                    {soLeitura && (
+                      <CopyButton
+                        value={orcamento.clienteCelular}
+                        label="Celular"
+                      />
+                    )}
+                  </div>
                 </div>
               </div>
               <div className="space-y-2">
                 <Label>Endereço da instalação</Label>
-                <Input defaultValue={orcamento.enderecoInstalacao} disabled={aprovado} />
+                <div className="flex items-center gap-1">
+                  <Input
+                    defaultValue={orcamento.enderecoInstalacao}
+                    disabled={soLeitura}
+                  />
+                  {soLeitura && (
+                    <CopyButton
+                      value={orcamento.enderecoInstalacao}
+                      label="Endereço"
+                    />
+                  )}
+                </div>
               </div>
               <div className="space-y-2">
                 <Label>Descrição</Label>
                 <Textarea
                   defaultValue={orcamento.descricao}
                   rows={4}
-                  disabled={aprovado}
+                  disabled={soLeitura}
                 />
                 <p className="text-xs text-muted-foreground">
                   Informações de fornecedores são registradas aqui (não há
@@ -152,14 +217,17 @@ export default function OrcamentoDetalhePage() {
             <CardContent className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
                 <Label>Responsável</Label>
-                <Input defaultValue={orcamento.responsavel} disabled={aprovado} />
+                <Input
+                  defaultValue={orcamento.responsavel}
+                  disabled={soLeitura}
+                />
               </div>
               <div className="space-y-2">
                 <Label>Medidor (opcional)</Label>
                 <Input
                   defaultValue={orcamento.medidor ?? ""}
                   placeholder="A definir"
-                  disabled={aprovado}
+                  disabled={soLeitura}
                 />
               </div>
               <div className="space-y-2">
@@ -167,14 +235,16 @@ export default function OrcamentoDetalhePage() {
                 <Input
                   type="datetime-local"
                   defaultValue={orcamento.dataMedicao?.slice(0, 16)}
-                  disabled={aprovado}
+                  disabled={soLeitura}
                 />
               </div>
               <div className="space-y-2">
                 <Label>Valor estimado</Label>
                 <Input
-                  defaultValue={orcamento.valor ? formatCurrency(orcamento.valor) : ""}
-                  disabled={aprovado}
+                  defaultValue={
+                    orcamento.valor ? formatCurrency(orcamento.valor) : ""
+                  }
+                  disabled={soLeitura}
                 />
               </div>
             </CardContent>

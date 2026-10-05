@@ -1,4 +1,5 @@
 import * as React from "react";
+import { useNavigate } from "react-router-dom";
 import { Search, Wallet } from "lucide-react";
 import { PageHeader } from "@/components/page-header";
 import { StatusFilter } from "@/components/status-filter";
@@ -26,6 +27,7 @@ import { FINANCEIRO, situacaoFinanceira } from "@/data/status";
 import { formatCurrency, formatDate } from "@/lib/utils";
 
 export default function PagamentosPage() {
+  const navigate = useNavigate();
   const [filtro, setFiltro] = React.useState("TODOS");
   const [busca, setBusca] = React.useState("");
 
@@ -130,8 +132,7 @@ export default function PagamentosPage() {
                   <TableHead>Cliente</TableHead>
                   <TableHead>Pedido</TableHead>
                   <TableHead className="text-right">Total</TableHead>
-                  <TableHead className="text-right">Pago</TableHead>
-                  <TableHead className="text-right">Saldo</TableHead>
+                  <TableHead className="text-right">Valor pago</TableHead>
                   <TableHead>Último pagamento</TableHead>
                   <TableHead>Situação</TableHead>
                 </TableRow>
@@ -140,7 +141,11 @@ export default function PagamentosPage() {
                 {lista.map((p) => {
                   const situ = FINANCEIRO[p.situacao];
                   return (
-                    <TableRow key={p.id}>
+                    <TableRow
+                      key={p.id}
+                      className="cursor-pointer"
+                      onClick={() => navigate(`/pedidos/${p.id}`)}
+                    >
                       <TableCell className="font-medium">
                         {p.clienteNome}
                       </TableCell>
@@ -152,9 +157,6 @@ export default function PagamentosPage() {
                       </TableCell>
                       <TableCell className="text-right tabular-nums">
                         {formatCurrency(p.valorPago)}
-                      </TableCell>
-                      <TableCell className="text-right tabular-nums">
-                        {formatCurrency(p.saldo)}
                       </TableCell>
                       <TableCell className="text-muted-foreground">
                         {p.ultimoPagamentoEm
@@ -176,7 +178,11 @@ export default function PagamentosPage() {
             {lista.map((p) => {
               const situ = FINANCEIRO[p.situacao];
               return (
-                <Card key={p.id} className="p-4">
+                <Card
+                  key={p.id}
+                  className="p-4"
+                  onClick={() => navigate(`/pedidos/${p.id}`)}
+                >
                   <div className="flex items-start justify-between">
                     <div>
                       <div className="text-xs text-muted-foreground">
@@ -186,7 +192,7 @@ export default function PagamentosPage() {
                     </div>
                     <Badge variant={situ.variant}>{situ.label}</Badge>
                   </div>
-                  <div className="mt-2 grid grid-cols-3 gap-2 text-xs">
+                  <div className="mt-2 grid grid-cols-2 gap-2 text-xs">
                     <div>
                       <div className="text-muted-foreground">Total</div>
                       <div className="tabular-nums">
@@ -194,15 +200,9 @@ export default function PagamentosPage() {
                       </div>
                     </div>
                     <div>
-                      <div className="text-muted-foreground">Pago</div>
+                      <div className="text-muted-foreground">Valor pago</div>
                       <div className="tabular-nums">
                         {formatCurrency(p.valorPago)}
-                      </div>
-                    </div>
-                    <div>
-                      <div className="text-muted-foreground">Saldo</div>
-                      <div className="tabular-nums">
-                        {formatCurrency(p.saldo)}
                       </div>
                     </div>
                   </div>
