@@ -22,13 +22,12 @@ import ArquivadosPage from "@/pages/arquivados";
 import AdministracaoPage from "@/pages/administracao";
 
 const router = createBrowserRouter([
+  { path: "/", element: <Navigate to="/login" replace /> },
   { path: "/login", element: <LoginPage /> },
   { path: "/orcamentos/:id/ficha", element: <FichaMedicaoPage /> },
   {
-    path: "/",
     element: <AppLayout />,
     children: [
-      { index: true, element: <Navigate to="/orcamentos" replace /> },
       { path: "clientes", element: <ClientesPage /> },
       { path: "clientes/:id", element: <ClienteDetalhePage /> },
       { path: "orcamentos", element: <OrcamentosPage /> },

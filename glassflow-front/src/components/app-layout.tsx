@@ -1,5 +1,5 @@
 import * as React from "react";
-import { Outlet } from "react-router-dom";
+import { Outlet, useNavigate } from "react-router-dom";
 import { Menu, Moon, Sun, LogOut, UserCog } from "lucide-react";
 import { AppSidebar } from "./app-sidebar";
 import { Button } from "@/components/ui/button";
@@ -18,6 +18,7 @@ import { useSession } from "@/app/session";
 import { useTheme } from "@/app/theme";
 
 export function AppLayout() {
+  const navigate = useNavigate();
   const { papel, setPapel, nome } = useSession();
   const { theme, toggle } = useTheme();
   const [mobileOpen, setMobileOpen] = React.useState(false);
@@ -110,7 +111,7 @@ export function AppLayout() {
                   {papel === "ADMINISTRADOR" ? "Operador" : "Administrador"}
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem>
+                <DropdownMenuItem onClick={() => navigate("/login")}>
                   <LogOut className="h-4 w-4" />
                   Sair
                 </DropdownMenuItem>
