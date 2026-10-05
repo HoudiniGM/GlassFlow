@@ -1,6 +1,6 @@
 import * as React from "react";
 import { Copy, Check } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Button, type ButtonProps } from "@/components/ui/button";
 import {
   Tooltip,
   TooltipContent,
@@ -13,10 +13,24 @@ interface CopyButtonProps {
   value: string;
   label: string; // o que está sendo copiado, ex.: "Celular"
   className?: string;
+  /** Texto exibido ao lado do ícone. Se omitido, o botão fica apenas com o ícone. */
+  text?: string;
+  variant?: ButtonProps["variant"];
+  size?: ButtonProps["size"];
+  /** Mensagem de confirmação (toast). Padrão: "{label} copiado." */
+  successMessage?: string;
 }
 
-// Cópia rápida para facilitar o envio via WhatsApp (nome, celular, endereço).
-export function CopyButton({ value, label, className }: CopyButtonProps) {
+// Cópia rápida para facilitar o envio via WhatsApp (nome, celular, endereço, etc.).
+export function CopyButton({
+  value,
+  label,
+  className,
+  text,
+  variant = "ghost",
+  size,
+  successMessage,
+}: CopyButtonProps) {
   const [copiado, setCopiado] = React.useState(false);
 
   async function copiar() {
@@ -32,17 +46,41 @@ export function CopyButton({ value, label, className }: CopyButtonProps) {
       document.body.removeChild(ta);
     }
     setCopiado(true);
-    toast.success(`${label} copiado.`);
+    toast.success(successMessage ?? `${label} copiado.`);
     setTimeout(() => setCopiado(false), 1500);
   }
 
+  const Icon = copiado ? Check : Copy;
+  const iconClass = copiado ? "text-status-aprovado-fg" : undefined;
+
+  // Variante com texto (botão rotulado)
+  if (text) {
+    return (
+      <Button
+        type="button"
+        variant={variant}
+        size={size}
+        className={className}
+        onClick={(e) => {
+          e.stopPropagation();
+          copiar();
+        }}
+        aria-label={`Copiar ${label.toLowerCase()}`}
+      >
+        <Icon className={cn("h-4 w-4", iconClass)} />
+        {copiado ? "Copiado!" : text}
+      </Button>
+    );
+  }
+
+  // Variante apenas ícone (padrão)
   return (
     <Tooltip>
       <TooltipTrigger asChild>
         <Button
           type="button"
-          variant="ghost"
-          size="icon"
+          variant={variant}
+          size={size ?? "icon"}
           className={cn("h-7 w-7 text-muted-foreground", className)}
           onClick={(e) => {
             e.stopPropagation();
@@ -50,11 +88,7 @@ export function CopyButton({ value, label, className }: CopyButtonProps) {
           }}
           aria-label={`Copiar ${label.toLowerCase()}`}
         >
-          {copiado ? (
-            <Check className="h-3.5 w-3.5 text-status-aprovado-fg" />
-          ) : (
-            <Copy className="h-3.5 w-3.5" />
-          )}
+          <Icon className={cn("h-3.5 w-3.5", iconClass)} />
         </Button>
       </TooltipTrigger>
       <TooltipContent>Copiar {label.toLowerCase()}</TooltipContent>

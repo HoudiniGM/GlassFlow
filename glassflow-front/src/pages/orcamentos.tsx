@@ -37,12 +37,24 @@ import {
 import { StatusSelect } from "@/components/status-select";
 import { DetailField, DetailGrid } from "@/components/detail-field";
 import { WhatsappButton } from "@/components/whatsapp-button";
+import { CopyButton } from "@/components/copy-button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { orcamentos } from "@/data/mock";
 import { ORCAMENTO_STATUS, ORCAMENTO_STATUS_ORDER } from "@/data/status";
-import type { StatusOrcamento } from "@/data/types";
+import type { Orcamento, StatusOrcamento } from "@/data/types";
 import { formatCurrency, formatDateTime } from "@/lib/utils";
 import { toast } from "sonner";
+
+// Monta o bloco de texto para cópia rápida (envio via WhatsApp).
+function textoCopiaOrcamento(o: Orcamento): string {
+  return [
+    `**Cliente:** ${o.clienteNome}`,
+    `**Celular:** ${o.clienteCelular}`,
+    `**Endereço:** ${o.enderecoInstalacao}`,
+    `**Descrição:** ${o.descricao}`,
+    `**Valor estimado:** ${o.valor ? formatCurrency(o.valor) : "—"}`,
+  ].join("\n");
+}
 
 export default function OrcamentosPage() {
   const navigate = useNavigate();
@@ -249,7 +261,7 @@ export default function OrcamentosPage() {
                                 {o.valor ? formatCurrency(o.valor) : "—"}
                               </DetailField>
                             </DetailGrid>
-                            <div className="mt-3 flex gap-2">
+                            <div className="mt-3 flex flex-wrap gap-2">
                               <Button
                                 size="sm"
                                 onClick={() => navigate(`/orcamentos/${o.id}`)}
@@ -260,6 +272,14 @@ export default function OrcamentosPage() {
                               <WhatsappButton
                                 celular={o.clienteCelular}
                                 size="sm"
+                              />
+                              <CopyButton
+                                value={textoCopiaOrcamento(o)}
+                                label="Dados do orçamento"
+                                text="Copiar dados"
+                                variant="outline"
+                                size="sm"
+                                successMessage="Dados do orçamento copiados."
                               />
                             </div>
                           </TableCell>
@@ -320,6 +340,16 @@ export default function OrcamentosPage() {
                       <div className="flex justify-between">
                         <span className="text-muted-foreground">Valor</span>
                         <span>{o.valor ? formatCurrency(o.valor) : "—"}</span>
+                      </div>
+                      <div onClick={(e) => e.stopPropagation()}>
+                        <CopyButton
+                          value={textoCopiaOrcamento(o)}
+                          label="Dados do orçamento"
+                          text="Copiar dados"
+                          variant="outline"
+                          size="sm"
+                          successMessage="Dados do orçamento copiados."
+                        />
                       </div>
                     </div>
                   )}
